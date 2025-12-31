@@ -1,0 +1,10 @@
+resources/credentials.json
+resources/credentials.json.enc
+node_modules/
+enc.py
+build/
+dist/
+downloader.spec
+.env
+backend/client_secret.json
+backend/credentials.json
