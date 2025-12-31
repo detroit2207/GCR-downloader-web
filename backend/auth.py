@@ -88,6 +88,7 @@ def callback(request: Request, code: str, state: str):
         "client_secret": credentials.client_secret,
         "scopes": credentials.scopes
     }
+    print(f"DEBUG: Session initialized in callback for user")
     
     # Redirect to frontend dashboard (hardcoded for now, should be env var)
     frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")

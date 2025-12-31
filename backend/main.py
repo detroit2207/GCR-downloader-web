@@ -8,7 +8,13 @@ import os
 app = FastAPI(title="Google Classroom Downloader API")
 
 # Add Session Middleware (Secret key should be in env var for prod)
-app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "supersecretkey"))
+# same_site="none" and https_only=True are required for cross-site cookies in production
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=os.getenv("SECRET_KEY", "supersecretkey"),
+    same_site="none",
+    https_only=True
+)
 
 # Configure CORS
 # Configure CORS
@@ -31,8 +37,10 @@ def read_root():
 
 @app.get("/courses")
 def get_courses(request: Request):
+    print(f"DEBUG: Session keys: {list(request.session.keys())}")
     try:
         creds = get_credentials(request)
+        print("DEBUG: Credentials retrieved successfully")
         from backend.core import list_courses
         return list_courses(creds)
     except Exception as e:
