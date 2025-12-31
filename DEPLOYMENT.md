@@ -71,8 +71,12 @@ This guide will help you host your **Google Classroom Downloader** so your frien
     *   Navigate to **APIs & Services** -> **Credentials**.
     *   Edit your OAuth 2.0 Client ID.
     *   **Authorized JavaScript Origins**: Add your **Frontend URL** (e.g., `https://gcr-frontend.onrender.com`).
-    *   **Authorized Redirect URIs**: Add your **Backend Auth Callback URL** (e.g., `https://gcr-backend.onrender.com/auth/callback`).
+    *   **Authorized Redirect URIs**: Add your **Backend Auth Callback URL**. It MUST look like this: `https://YOUR-BACKEND-NAME.onrender.com/auth/callback`.
     *   **Save**.
+
+> [!IMPORTANT]
+> Make sure your Render **Backend** has the environment variable `BACKEND_URL` set to `https://YOUR-BACKEND-NAME.onrender.com` (no trailing slash). Google is very picky about exact matches!
+
 
 ---
 

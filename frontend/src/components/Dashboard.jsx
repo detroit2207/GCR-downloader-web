@@ -5,7 +5,7 @@ import PixelCard from './PixelCard';
 import '../Modal.css';
 
 const Dashboard = () => {
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const API_URL = import.meta.env.VITE_API_URL || "https://gcr-frontend.onrender.com";
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);

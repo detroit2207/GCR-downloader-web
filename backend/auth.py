@@ -51,7 +51,8 @@ SCOPES = [
 def get_flow(redirect_uri: str = None):
     # Ensure redirect_uri is dynamic or fixed based on environment
     if not redirect_uri:
-        redirect_uri = os.getenv("BACKEND_URL", "http://localhost:8000") + "/auth/callback"
+        backend_url = os.getenv("BACKEND_URL", "http://localhost:8000").rstrip("/")
+        redirect_uri = f"{backend_url}/auth/callback"
     
     return Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE,
