@@ -115,13 +115,13 @@ const Dashboard = () => {
     if (error) return <div style={{ padding: '20px', color: 'red' }}>{error}</div>;
 
     return (
-        <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ padding: '2rem', maxWidth: '1600px', margin: '0 auto', width: '100%' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <h1 style={{ color: '#9ECE6A' }}>My Courses</h1>
                 <button onClick={handleLogout} style={{ padding: '8px 16px', cursor: 'pointer', color: '#9ECE6A', borderColor: '#9ECE6A' }}>Logout</button>
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px', width: '100%' }}>
                 {courses.map(course => (
                     <PixelCard key={course.id} variant="default" colors="#ff0000ff,#4285f4,#8ab4f8" speed={40}>
                         <div style={{ position: 'relative', zIndex: 10, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'transparent' }}>
