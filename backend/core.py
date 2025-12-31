@@ -4,6 +4,7 @@ import zipfile
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
 from typing import Generator
+import mimetypes
 
 def get_service(creds, service_name, version):
     return build(service_name, version, credentials=creds)
@@ -76,8 +77,13 @@ def traverse_and_collect(drive_service, folder_id, path_prefix, collected_files)
                 traverse_and_collect(drive_service, f["id"], new_prefix, collected_files)
             else:
                 full_path = os.path.join(path_prefix, name)
-                # Store tuple: (path, file_id, mimeType)
-                collected_files.append((full_path, f["id"], f.get("mimeType")))
+                # Store dict with metadata
+                collected_files.append({
+                    "id": f["id"],
+                    "path": full_path,
+                    "name": name,
+                    "mimeType": f.get("mimeType")
+                })
         
         page_token = resp.get("nextPageToken")
         if not page_token:
@@ -85,9 +91,9 @@ def traverse_and_collect(drive_service, folder_id, path_prefix, collected_files)
 
 def collect_course_materials(classroom_service, drive_service, course_id):
     """
-    Returns a list of (zip_path, file_id, mime_type) tuples
+    Returns a list of file dictionaries
     """
-    collected_files = [] # List of (path, file_id, mimeType)
+    collected_files = [] # List of dicts
 
     # Announcements
     anns_resp = classroom_service.courses().announcements().list(courseId=course_id).execute()
@@ -101,7 +107,15 @@ def collect_course_materials(classroom_service, drive_service, course_id):
                 if df.get("mimeType") == "application/vnd.google-apps.folder":
                      traverse_and_collect(drive_service, df["id"], folder_name, collected_files)
                 else:
-                    collected_files.append((os.path.join(folder_name, f_name), df["id"], df.get("mimeType")))
+                    mime = df.get("mimeType")
+                    if not mime:
+                        mime, _ = mimetypes.guess_type(f_name)
+                    collected_files.append({
+                        "id": df["id"],
+                        "path": os.path.join(folder_name, f_name),
+                        "name": f_name,
+                        "mimeType": mime
+                    })
 
     # Coursework Materials
     mats_resp = classroom_service.courses().courseWorkMaterials().list(courseId=course_id).execute()
@@ -115,7 +129,15 @@ def collect_course_materials(classroom_service, drive_service, course_id):
                 if df.get("mimeType") == "application/vnd.google-apps.folder":
                      traverse_and_collect(drive_service, df["id"], folder_name, collected_files)
                 else:
-                    collected_files.append((os.path.join(folder_name, f_name), df["id"], df.get("mimeType")))
+                    mime = df.get("mimeType")
+                    if not mime:
+                        mime, _ = mimetypes.guess_type(f_name)
+                    collected_files.append({
+                        "id": df["id"],
+                        "path": os.path.join(folder_name, f_name),
+                        "name": f_name,
+                        "mimeType": mime
+                    })
 
     # Coursework (Assignments)
     works_resp = classroom_service.courses().courseWork().list(courseId=course_id).execute()
@@ -129,7 +151,15 @@ def collect_course_materials(classroom_service, drive_service, course_id):
                 if df.get("mimeType") == "application/vnd.google-apps.folder":
                      traverse_and_collect(drive_service, df["id"], folder_name, collected_files)
                 else:
-                    collected_files.append((os.path.join(folder_name, f_name), df["id"], df.get("mimeType")))
+                    mime = df.get("mimeType")
+                    if not mime:
+                        mime, _ = mimetypes.guess_type(f_name)
+                    collected_files.append({
+                        "id": df["id"],
+                        "path": os.path.join(folder_name, f_name),
+                        "name": f_name,
+                        "mimeType": mime
+                    })
 
     return collected_files
 
@@ -168,18 +198,27 @@ def download_file_content_to_zip(drive_service, file_id, zip_file, zip_path):
         zip_file.writestr(f"{zip_path}.error.txt", f"Failed: {e}")
         return False
 
-def background_zip_task(creds, course_id, job_id, course_name):
+def background_zip_task(creds, course_id, job_id, course_name, selected_ids=None):
     try:
         update_job(job_id, "PROCESSING", 0, "Scanning course materials...")
         
         classroom_service = get_service(creds, "classroom", "v1")
         drive_service = get_service(creds, "drive", "v3")
 
-        files_to_download = collect_course_materials(classroom_service, drive_service, course_id)
+        all_files = collect_course_materials(classroom_service, drive_service, course_id)
+        
+        # Filter if selected_ids is provided
+        if selected_ids is not None:
+            # Use set for faster lookups
+            selected_set = set(selected_ids)
+            files_to_download = [f for f in all_files if f["id"] in selected_set]
+        else:
+            files_to_download = all_files
+            
         total_files = len(files_to_download)
         
         if total_files == 0:
-            update_job(job_id, "FAILED", 0, "No files found in course.")
+            update_job(job_id, "FAILED", 0, "No files selected or found.")
             return
 
         # Create temp file
@@ -188,10 +227,14 @@ def background_zip_task(creds, course_id, job_id, course_name):
         zip_filename = f"{safe_course_name}.zip"
         temp_zip_path = os.path.join(temp_dir, f"gcr_{job_id}.zip")
 
-        update_job(job_id, "PROCESSING", 0, f"Found {total_files} files. Starting download...")
+        update_job(job_id, "PROCESSING", 0, f"Preparing to download {total_files} files...")
 
         with zipfile.ZipFile(temp_zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-            for idx, (path, file_id, mime_type) in enumerate(files_to_download):
+            for idx, file_data in enumerate(files_to_download):
+                path = file_data["path"]
+                file_id = file_data["id"]
+                mime_type = file_data["mimeType"]
+                
                 # Update progress
                 percent = int((idx / total_files) * 100)
                 update_job(job_id, "PROCESSING", percent, f"Downloading {os.path.basename(path)}...")
@@ -206,7 +249,7 @@ def background_zip_task(creds, course_id, job_id, course_name):
         traceback.print_exc()
         update_job(job_id, "FAILED", 0, str(e))
 
-def start_zip_job(creds, course_id, course_name):
+def start_zip_job(creds, course_id, course_name, selected_ids=None):
     job_id = str(uuid.uuid4())
     jobs[job_id] = {
         "status": "QUEUED",
@@ -216,7 +259,7 @@ def start_zip_job(creds, course_id, course_name):
     }
     
     # Start thread
-    t = threading.Thread(target=background_zip_task, args=(creds, course_id, job_id, course_name))
+    t = threading.Thread(target=background_zip_task, args=(creds, course_id, job_id, course_name, selected_ids))
     t.start()
     
     return job_id

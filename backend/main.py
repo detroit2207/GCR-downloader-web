@@ -48,16 +48,35 @@ def get_courses(request: Request):
 
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
+from typing import List, Optional
 
 class JobStartRequest(BaseModel):
     courseName: str
+    selectedFileIds: Optional[List[str]] = None
+
+@app.get("/courses/{course_id}/materials")
+def get_course_materials(course_id: str, request: Request):
+    try:
+        creds = get_credentials(request)
+        from backend.core import collect_course_materials, get_service
+        # We need services to pass to collect_course_materials
+        classroom_service = get_service(creds, "classroom", "v1")
+        drive_service = get_service(creds, "drive", "v3")
+        
+        materials = collect_course_materials(classroom_service, drive_service, course_id)
+        return materials
+    except Exception as e:
+        if "Not authenticated" in str(e):
+             raise HTTPException(status_code=401, detail="Not authenticated")
+        print(f"Error fetching materials: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/courses/{course_id}/download/start")
 def start_download(course_id: str, job_req: JobStartRequest, request: Request):
     try:
         creds = get_credentials(request)
         from backend.core import start_zip_job
-        job_id = start_zip_job(creds, course_id, job_req.courseName)
+        job_id = start_zip_job(creds, course_id, job_req.courseName, job_req.selectedFileIds)
         return {"job_id": job_id}
     except Exception as e:
         if "Not authenticated" in str(e):

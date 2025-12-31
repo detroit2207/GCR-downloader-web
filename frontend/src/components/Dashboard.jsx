@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import FileSelector from './FileSelector';
 import '../Modal.css';
 
 const Dashboard = () => {
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // State for File Selection
+    const [selectingCourse, setSelectingCourse] = useState(null); // { id, name }
+    const [filesToSelect, setFilesToSelect] = useState(null); // Array of file objects
+    const [loadingMaterials, setLoadingMaterials] = useState(false);
+
+    // State for Download Job
     const [downloadJob, setDownloadJob] = useState(null); // { id, courseName, progress, status, message }
 
     useEffect(() => {
@@ -24,7 +32,7 @@ const Dashboard = () => {
                         // Trigger file download
                         window.location.href = `http://localhost:8000/download/result/${downloadJob.id}`;
                         clearInterval(interval);
-                        setTimeout(() => setDownloadJob(null), 2000); // Close modal after 2s
+                        setTimeout(() => setDownloadJob(null), 2000); // Close modal 2s after complete
                     } else if (res.data.status === 'FAILED') {
                         clearInterval(interval);
                     }
@@ -54,14 +62,34 @@ const Dashboard = () => {
         }
     };
 
-    const handleDownloadStart = async (courseId, courseName) => {
+    const onDownloadClick = async (courseId, courseName) => {
+        // 1. Fetch materials first
+        setLoadingMaterials(true);
         try {
-            setDownloadJob({ id: null, courseName, progress: 0, status: 'STARTING', message: 'Initializing...' });
-            const res = await axios.post(`http://localhost:8000/courses/${courseId}/download/start`,
-                { courseName },
+            const res = await axios.get(`http://localhost:8000/courses/${courseId}/materials`, { withCredentials: true });
+            setFilesToSelect(res.data);
+            setSelectingCourse({ id: courseId, name: courseName });
+        } catch (err) {
+            console.error("Failed to load materials", err);
+            alert("Failed to load course materials");
+        } finally {
+            setLoadingMaterials(false);
+        }
+    };
+
+    const handleConfirmSelection = async (selectedIds) => {
+        const { id, name } = selectingCourse;
+        setSelectingCourse(null);
+        setFilesToSelect(null);
+
+        // Start download job
+        try {
+            setDownloadJob({ id: null, courseName: name, progress: 0, status: 'STARTING', message: 'Initializing...' });
+            const res = await axios.post(`http://localhost:8000/courses/${id}/download/start`,
+                { courseName: name, selectedFileIds: selectedIds },
                 { withCredentials: true }
             );
-            setDownloadJob({ id: res.data.job_id, courseName, progress: 0, status: 'QUEUED', message: 'Queued...' });
+            setDownloadJob({ id: res.data.job_id, courseName: name, progress: 0, status: 'QUEUED', message: 'Queued...' });
         } catch (err) {
             console.error(err);
             setDownloadJob({ status: 'FAILED', message: 'Failed to start download.' });
@@ -85,9 +113,11 @@ const Dashboard = () => {
                             <h2 style={{ fontSize: '1.25rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{course.name}</h2>
                             <p style={{ opacity: 0.9 }}>{course.section}</p>
                         </div>
-                        <div style={{ padding: '16px', display: 'flex', justifyContent: 'flex-end' }}>
+                        <div style={{ padding: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                            {loadingMaterials && selectingCourse?.id === course.id && <span style={{ marginRight: 10, fontSize: '0.8rem' }}>Loading...</span>}
                             <button
-                                onClick={() => handleDownloadStart(course.id, course.name)}
+                                onClick={() => onDownloadClick(course.id, course.name)}
+                                disabled={loadingMaterials}
                                 style={{
                                     backgroundColor: '#fff',
                                     color: '#1a73e8',
@@ -105,6 +135,16 @@ const Dashboard = () => {
                 ))}
             </div>
 
+            {/* File Selector Modal */}
+            {selectingCourse && filesToSelect && (
+                <FileSelector
+                    files={filesToSelect}
+                    onConfirm={handleConfirmSelection}
+                    onCancel={() => { setSelectingCourse(null); setFilesToSelect(null); }}
+                />
+            )}
+
+            {/* Download Progress Modal */}
             {downloadJob && (
                 <div className="modal-overlay">
                     <div className="modal-content">
