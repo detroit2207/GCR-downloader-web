@@ -4,45 +4,52 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  backdrop-filter: blur(5px);
 }
 
 .modal-content {
-  background: white;
+  background: rgba(0, 0, 0, 0.8);
   padding: 24px;
-  border-radius: 8px;
+  border-radius: 0;
+  border: 4px solid #9ECE6A;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 4px 4px 0px 0px #9ECE6A;
   text-align: center;
+  color: #9ECE6A;
 }
 
 .progress-bar-container {
   width: 100%;
-  height: 10px;
-  background-color: #e0e0e0;
-  border-radius: 5px;
+  height: 20px;
+  background-color: transparent;
+  border: 2px solid #9ECE6A;
+  border-radius: 0;
   margin: 16px 0;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background-color: #1a73e8;
+  background-color: #9ECE6A;
   transition: width 0.3s ease;
 }
 
 .modal-title {
   font-size: 1.25rem;
   margin-bottom: 12px;
-  color: #202124;
+  color: #9ECE6A;
+  font-family: 'Press Start 2P', monospace;
 }
 
 .modal-message {
-  color: #5f6368;
+  color: #9ECE6A;
   margin-bottom: 8px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.8rem;
 }

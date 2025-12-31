@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import FileSelector from './FileSelector';
+import PixelCard from './PixelCard';
 import '../Modal.css';
 
 const Dashboard = () => {
@@ -96,42 +97,57 @@ const Dashboard = () => {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await axios.get('http://localhost:8000/auth/logout', { withCredentials: true });
+        } catch (err) {
+            console.error("Logout failed", err);
+        } finally {
+            window.location.href = "/";
+        }
+    };
+
     if (loading) return <div style={{ padding: '20px' }}>Loading courses...</div>;
     if (error) return <div style={{ padding: '20px', color: 'red' }}>{error}</div>;
 
     return (
         <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h1 style={{ color: '#202124' }}>My Courses</h1>
-                <button onClick={() => window.location.href = 'http://localhost:8000/auth/logout'} style={{ padding: '8px 16px', cursor: 'pointer' }}>Logout</button>
+                <h1 style={{ color: '#9ECE6A' }}>My Courses</h1>
+                <button onClick={handleLogout} style={{ padding: '8px 16px', cursor: 'pointer', color: '#9ECE6A', borderColor: '#9ECE6A' }}>Logout</button>
             </header>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
                 {courses.map(course => (
-                    <div key={course.id} style={{ border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden', backgroundColor: 'white' }}>
-                        <div style={{ height: '100px', backgroundColor: '#1a73e8', color: 'white', padding: '16px' }}>
-                            <h2 style={{ fontSize: '1.25rem', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{course.name}</h2>
-                            <p style={{ opacity: 0.9 }}>{course.section}</p>
+                    <PixelCard key={course.id} variant="default" colors="#ff0000ff,#4285f4,#8ab4f8" speed={40}>
+                        <div style={{ position: 'relative', zIndex: 10, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', backgroundColor: 'transparent' }}>
+                            <div style={{ height: '100px', backgroundColor: 'transparent', color: '#9ECE6A', padding: '16px', borderBottom: '4px solid #9ECE6A', backdropFilter: 'blur(2px)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <h2 style={{ fontSize: '0.9rem', margin: 0, overflow: 'visible', whiteSpace: 'normal', fontFamily: "'Press Start 2P', monospace", lineHeight: '1.5', maxHeight: '100%', wordBreak: 'break-word' }}>{course.name}</h2>
+                                <p style={{ opacity: 0.9, fontSize: '0.7rem', marginTop: '8px' }}>{course.section}</p>
+                            </div>
+                            <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', backgroundColor: 'transparent' }}>
+                                {loadingMaterials && selectingCourse?.id === course.id && <span style={{ marginRight: 10, fontSize: '0.6rem', color: '#000' }}>Loading...</span>}
+                                <button
+                                    onClick={() => onDownloadClick(course.id, course.name)}
+                                    disabled={loadingMaterials}
+                                    style={{
+                                        backgroundColor: 'transparent',
+                                        color: '#9ECE6A',
+                                        border: '2px solid #9ECE6A',
+                                        boxShadow: '2px 2px 0px 0px #9ECE6A',
+                                        borderRadius: '0',
+                                        padding: '8px 16px',
+                                        cursor: 'pointer',
+                                        fontWeight: 'bold',
+                                        fontSize: '0.7rem',
+                                        fontFamily: "'Press Start 2P', monospace"
+                                    }}
+                                >
+                                    Download ZIP
+                                </button>
+                            </div>
                         </div>
-                        <div style={{ padding: '16px', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                            {loadingMaterials && selectingCourse?.id === course.id && <span style={{ marginRight: 10, fontSize: '0.8rem' }}>Loading...</span>}
-                            <button
-                                onClick={() => onDownloadClick(course.id, course.name)}
-                                disabled={loadingMaterials}
-                                style={{
-                                    backgroundColor: '#fff',
-                                    color: '#1a73e8',
-                                    border: '1px solid #dadce0',
-                                    borderRadius: '4px',
-                                    padding: '8px 16px',
-                                    cursor: 'pointer',
-                                    fontWeight: '500'
-                                }}
-                            >
-                                Download ZIP
-                            </button>
-                        </div>
-                    </div>
+                    </PixelCard>
                 ))}
             </div>
 
@@ -165,7 +181,7 @@ const Dashboard = () => {
                         {(downloadJob.status === 'COMPLETED' || downloadJob.status === 'FAILED') && (
                             <button
                                 onClick={() => setDownloadJob(null)}
-                                style={{ marginTop: '16px', padding: '8px 16px', cursor: 'pointer' }}
+                                style={{ marginTop: '16px', padding: '8px 16px', cursor: 'pointer', backgroundColor: 'transparent', color: '#9ECE6A', border: '2px solid #9ECE6A', fontFamily: "'Press Start 2P', monospace", boxShadow: '2px 2px 0px 0px #9ECE6A', borderRadius: 0 }}
                             >
                                 Close
                             </button>
