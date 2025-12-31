@@ -17,10 +17,10 @@ This guide will help you host your **Google Classroom Downloader** so your frien
 
 2.  **Configure Settings**:
     *   **Name**: `gcr-backend` (or similar).
-    *   **Root Directory**: `backend` (Important! This tells Render where the Python app is).
+    *   **Root Directory**: `.` (Keep it empty or dot. Do NOT set it to `backend`, otherwise imports break).
     *   **Runtime**: **Python 3**.
-    *   **Build Command**: `pip install -r requirements.txt`.
-    *   **Start Command**: `gunicorn -k uvicorn.workers.UvicornWorker main:app`.
+    *   **Build Command**: `pip install -r backend/requirements.txt`.
+    *   **Start Command**: `gunicorn -k uvicorn.workers.UvicornWorker backend.main:app`.
 
 3.  **Environment Variables**:
     *   Scroll down to **Environment Variables** and add:
