@@ -5,6 +5,7 @@ import PixelCard from './PixelCard';
 import '../Modal.css';
 
 const Dashboard = () => {
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
     const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -26,12 +27,12 @@ const Dashboard = () => {
         if (downloadJob && downloadJob.status !== 'COMPLETED' && downloadJob.status !== 'FAILED') {
             interval = setInterval(async () => {
                 try {
-                    const res = await axios.get(`http://localhost:8000/download/status/${downloadJob.id}`);
+                    const res = await axios.get(`${API_URL}/download/status/${downloadJob.id}`);
                     setDownloadJob(prev => ({ ...prev, ...res.data }));
 
                     if (res.data.status === 'COMPLETED') {
                         // Trigger file download
-                        window.location.href = `http://localhost:8000/download/result/${downloadJob.id}`;
+                        window.location.href = `${API_URL}/download/result/${downloadJob.id}`;
                         clearInterval(interval);
                         setTimeout(() => setDownloadJob(null), 2000); // Close modal 2s after complete
                     } else if (res.data.status === 'FAILED') {
@@ -47,7 +48,7 @@ const Dashboard = () => {
 
     const fetchCourses = async () => {
         try {
-            const response = await axios.get('http://localhost:8000/courses', {
+            const response = await axios.get(`${API_URL}/courses`, {
                 withCredentials: true
             });
             setCourses(response.data);
@@ -67,7 +68,7 @@ const Dashboard = () => {
         // 1. Fetch materials first
         setLoadingMaterials(true);
         try {
-            const res = await axios.get(`http://localhost:8000/courses/${courseId}/materials`, { withCredentials: true });
+            const res = await axios.get(`${API_URL}/courses/${courseId}/materials`, { withCredentials: true });
             setFilesToSelect(res.data);
             setSelectingCourse({ id: courseId, name: courseName });
         } catch (err) {
@@ -86,7 +87,7 @@ const Dashboard = () => {
         // Start download job
         try {
             setDownloadJob({ id: null, courseName: name, progress: 0, status: 'STARTING', message: 'Initializing...' });
-            const res = await axios.post(`http://localhost:8000/courses/${id}/download/start`,
+            const res = await axios.post(`${API_URL}/courses/${id}/download/start`,
                 { courseName: name, selectedFileIds: selectedIds },
                 { withCredentials: true }
             );
@@ -99,7 +100,7 @@ const Dashboard = () => {
 
     const handleLogout = async () => {
         try {
-            await axios.get('http://localhost:8000/auth/logout', { withCredentials: true });
+            await axios.get(`${API_URL}/auth/logout`, { withCredentials: true });
         } catch (err) {
             console.error("Logout failed", err);
         } finally {

@@ -33,7 +33,7 @@ SCOPES = [
 def get_flow(redirect_uri: str = None):
     # Ensure redirect_uri is dynamic or fixed based on environment
     if not redirect_uri:
-        redirect_uri = "http://localhost:8000/auth/callback"
+        redirect_uri = os.getenv("BACKEND_URL", "http://localhost:8000") + "/auth/callback"
     
     return Flow.from_client_secrets_file(
         CLIENT_SECRETS_FILE,
@@ -71,7 +71,8 @@ def callback(request: Request, code: str, state: str):
     }
     
     # Redirect to frontend dashboard (hardcoded for now, should be env var)
-    return RedirectResponse("http://localhost:5173/dashboard")
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    return RedirectResponse(f"{frontend_url}/dashboard")
 
 @router.get("/logout")
 def logout(request: Request):

@@ -11,11 +11,8 @@ app = FastAPI(title="Google Classroom Downloader API")
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY", "supersecretkey"))
 
 # Configure CORS
-origins = [
-    "http://localhost:3000",  # React default port
-    "http://localhost:5173",  # Vite default port
-    "http://127.0.0.1:5173",
-]
+# Configure CORS
+origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173").split(",")
 
 app.add_middleware(
     CORSMiddleware,
