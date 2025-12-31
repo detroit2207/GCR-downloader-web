@@ -8,17 +8,27 @@ import os
 app = FastAPI(title="Google Classroom Downloader API")
 
 # Add Session Middleware (Secret key should be in env var for prod)
-# same_site="none" and https_only=True are required for cross-site cookies in production
 app.add_middleware(
     SessionMiddleware, 
     secret_key=os.getenv("SECRET_KEY", "supersecretkey"),
     same_site="none",
-    https_only=True
+    https_only=True  # Required for SameSite=None
 )
 
+# Custom middleware to handle Render's proxy headers
+# This ensures Starlette sees 'https' and sends the session cookie
+@app.middleware("http")
+async def fix_proxy_headers(request: Request, call_next):
+    if request.headers.get("x-forwarded-proto") == "https":
+        request.scope["scheme"] = "https"
+    return await call_next(request)
+
 # Configure CORS
-# Configure CORS
-origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173").split(",")
+# Clean origins to avoid trailing slash or whitespace mismatches
+raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,http://127.0.0.1:5173").split(",")
+origins = [o.strip().rstrip("/") for o in raw_origins]
+if os.getenv("FRONTEND_URL"):
+    origins.append(os.getenv("FRONTEND_URL").strip().rstrip("/"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,6 +37,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/debug-session")
+def debug_session(request: Request):
+    return {
+        "session_keys": list(request.session.keys()),
+        "url_scheme": request.url.scheme,
+        "x_forwarded_proto": request.headers.get("x-forwarded-proto"),
+        "origins_allowed": origins
+    }
 
 app.include_router(auth_router)
 

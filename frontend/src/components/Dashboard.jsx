@@ -28,7 +28,9 @@ const Dashboard = () => {
         if (downloadJob && downloadJob.status !== 'COMPLETED' && downloadJob.status !== 'FAILED') {
             interval = setInterval(async () => {
                 try {
-                    const res = await axios.get(`${API_URL}/download/status/${downloadJob.id}`);
+                    const res = await axios.get(`${API_URL}/download/status/${downloadJob.id}`, {
+                        withCredentials: true
+                    });
                     setDownloadJob(prev => ({ ...prev, ...res.data }));
 
                     if (res.data.status === 'COMPLETED') {

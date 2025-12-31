@@ -82,12 +82,12 @@ def callback(request: Request, code: str, state: str):
     
     credentials = flow.credentials
     
+    # Optimize session size: Only store tokens. 
+    # Client ID/Secret are in our local file anyway.
     request.session["credentials"] = {
         "token": credentials.token,
         "refresh_token": credentials.refresh_token,
         "token_uri": credentials.token_uri,
-        "client_id": credentials.client_id,
-        "client_secret": credentials.client_secret,
         "scopes": credentials.scopes
     }
     print(f"DEBUG: Session initialized in callback for user")
@@ -117,11 +117,16 @@ def get_credentials(request: Request) -> Credentials:
         print(f"DEBUG: No credentials in session. Session ID maybe missing or expired.")
         raise HTTPException(status_code=401, detail="Not authenticated")
     
+    # Load client info from local file to keep session small
+    import json
+    with open(CLIENT_SECRETS_FILE, 'r') as f:
+        client_info = json.load(f)["web"]
+
     return Credentials(
         token=creds_data["token"],
         refresh_token=creds_data.get("refresh_token"),
         token_uri=creds_data["token_uri"],
-        client_id=creds_data["client_id"],
-        client_secret=creds_data["client_secret"],
+        client_id=client_info["client_id"],
+        client_secret=client_info["client_secret"],
         scopes=creds_data["scopes"]
     )
