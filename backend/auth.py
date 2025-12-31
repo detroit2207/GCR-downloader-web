@@ -19,11 +19,23 @@ os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_SECRETS_FILE = os.getenv("CLIENT_SECRETS_FILE", os.path.join(BASE_DIR, "client_secret.json"))
 
-# Fallback: Check root directory if not found in backend
+# Fallback: Check root directory if not found in backend or if explicitly set path missing
+print(f"--- AUTH DEBUG ---")
+print(f"Attempting to find client_secret.json...")
+print(f"Primary path check: {CLIENT_SECRETS_FILE}")
+
 if not os.path.exists(CLIENT_SECRETS_FILE):
+    print(f"Primary path not found. Checking parent directory fallback...")
     root_secret = os.path.join(os.path.dirname(BASE_DIR), "client_secret.json")
+    print(f"Secondary path check: {root_secret}")
     if os.path.exists(root_secret):
         CLIENT_SECRETS_FILE = root_secret
+        print(f"Found secret at: {CLIENT_SECRETS_FILE}")
+    else:
+        print(f"CRITICAL: client_secret.json not found at {CLIENT_SECRETS_FILE} or {root_secret}")
+else:
+    print(f"Using secret at: {CLIENT_SECRETS_FILE}")
+print(f"------------------")
 SCOPES = [
     'https://www.googleapis.com/auth/classroom.courses.readonly',
     'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
