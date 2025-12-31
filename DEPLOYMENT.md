@@ -56,6 +56,15 @@ This guide will help you host your **Google Classroom Downloader** so your frien
 
 4.  **Deploy**: Click **Create Static Site**.
 
+5.  **Fix "Not Found" on Refresh (SPA Routing)**:
+    *   In Render, go to your **Frontend** service -> **Settings**.
+    *   Scroll down to **Redirects and Rewrites**.
+    *   Click **Add Rule**.
+    *   **Source**: `/*`
+    *   **Destination**: `/index.html`
+    *   **Action**: `Rewrite`
+    *   **Save**. This ensures that if you refresh on `/dashboard`, it doesn't return "Not Found".
+
 ---
 
 ## Part 3: Connecting Them & Google Auth
