@@ -8,3 +8,4 @@ downloader.spec
 .env
 backend/client_secret.json
 backend/credentials.json
+client_secret.json

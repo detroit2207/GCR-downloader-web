@@ -18,6 +18,12 @@ os.environ["OAUTHLIB_RELAX_TOKEN_SCOPE"] = "1"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CLIENT_SECRETS_FILE = os.getenv("CLIENT_SECRETS_FILE", os.path.join(BASE_DIR, "client_secret.json"))
+
+# Fallback: Check root directory if not found in backend
+if not os.path.exists(CLIENT_SECRETS_FILE):
+    root_secret = os.path.join(os.path.dirname(BASE_DIR), "client_secret.json")
+    if os.path.exists(root_secret):
+        CLIENT_SECRETS_FILE = root_secret
 SCOPES = [
     'https://www.googleapis.com/auth/classroom.courses.readonly',
     'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
