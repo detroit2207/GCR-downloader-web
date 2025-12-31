@@ -72,7 +72,9 @@ def login(request: Request):
 
 @router.get("/callback")
 def callback(request: Request, code: str, state: str):
+    print(f"DEBUG: Entering callback with state={state}")
     if state != request.session.get("state"):
+        print(f"DEBUG: State mismatch. Session state: {request.session.get('state')}")
         raise HTTPException(status_code=400, detail="Invalid state parameter")
     
     flow = get_flow()
@@ -112,6 +114,7 @@ def get_current_user(request: Request):
 def get_credentials(request: Request) -> Credentials:
     creds_data = request.session.get("credentials")
     if not creds_data:
+        print(f"DEBUG: No credentials in session. Session ID maybe missing or expired.")
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     return Credentials(
